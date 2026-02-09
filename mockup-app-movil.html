@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Móvil - Cobrador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        }
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            margin: 40px auto;
+            border: 12px solid #1f2937;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            background: white;
+        }
+        .notch {
+            width: 200px;
+            height: 30px;
+            background: #1f2937;
+            border-radius: 0 0 20px 20px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+        .screen-content {
+            height: 100%;
+            overflow-y: auto;
+        }
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+        }
+        .client-card {
+            display: none;
+        }
+        .client-card.show {
+            display: block;
+        }
+        .nav-item.active {
+            color: #3b82f6;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-gray-100">
+    
+    <div class="phone-frame">
+        <div class="notch"></div>
+        
+        <div class="screen-content">
+            <!-- Status Bar -->
+            <div class="bg-white px-6 pt-12 pb-3 flex justify-between items-center text-xs">
+                <span class="font-medium">9:41</span>
+                <div class="flex items-center space-x-1">
+                    <span>📶</span>
+                    <span>📡</span>
+                    <span>🔋</span>
+                </div>
+            </div>
+            
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-sm opacity-90">Bienvenido,</p>
+                        <h1 class="text-2xl font-bold">Carlos Gómez</h1>
+                    </div>
+                    <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-xl">
+                        👤
+                    </div>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-white/10 backdrop-blur rounded-xl p-3 text-center">
+                        <p class="text-2xl font-bold">42</p>
+                        <p class="text-xs opacity-90">Clientes</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur rounded-xl p-3 text-center">
+                        <p class="text-2xl font-bold">$1.2M</p>
+                        <p class="text-xs opacity-90">Por Cobrar</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur rounded-xl p-3 text-center">
+                        <p class="text-2xl font-bold">$350K</p>
+                        <p class="text-xs opacity-90">Hoy</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="px-6 -mt-4 mb-4">
+                <div class="bg-white rounded-2xl shadow-lg p-4 flex items-center space-x-3">
+                    <span class="text-xl">🔍</span>
+                    <input 
+                        type="text" 
+                        id="search-input"
+                        placeholder="Buscar cliente..." 
+                        class="flex-1 outline-none text-gray-700"
+                        onkeyup="buscarCliente()"
+                    />
+                    <button onclick="mostrarFiltros()" class="text-blue-600 font-medium text-sm">Filtros</button>
+                </div>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="px-6 mb-4">
+                <div class="flex justify-around border-b border-gray-200">
+                    <button onclick="filtrarClientes('todos')" class="tab-button tab-active py-3 px-4 font-medium text-sm" data-tab="todos">Todos (42)</button>
+                    <button onclick="filtrarClientes('pendientes')" class="tab-button py-3 px-4 font-medium text-sm text-gray-500" data-tab="pendientes">Pendientes (28)</button>
+                    <button onclick="filtrarClientes('vencidos')" class="tab-button py-3 px-4 font-medium text-sm text-gray-500" data-tab="vencidos">Vencidos (5)</button>
+                    <button onclick="filtrarClientes('pagados')" class="tab-button py-3 px-4 font-medium text-sm text-gray-500" data-tab="pagados">Pagados (9)</button>
+                </div>
+            </div>
+            
+            <!-- Cliente Card 1 - Vencido -->
+            <div class="px-6 mb-4 client-card show" data-status="vencido" data-nombre="maria">
+                <div class="bg-white rounded-2xl shadow-md p-4 border-l-4 border-red-500">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center font-bold text-red-600">
+                                ML
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">María López</h3>
+                                <p class="text-xs text-gray-500">CC: 9876543210</p>
+                                <p class="text-xs text-gray-500 mt-1">📍 Carrera 50 #30-20, Centro</p>
+                            </div>
+                        </div>
+                        <span class="bg-red-100 text-red-700 px-2 py-1 rounded-lg text-xs font-bold">
+                            VENCIDO
+                        </span>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-3 mb-3">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Deuda Total:</span>
+                            <span class="font-bold text-gray-800">$500,000</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Pagado:</span>
+                            <span class="font-bold text-green-600">$100,000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Saldo:</span>
+                            <span class="font-bold text-red-600">$400,000</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mb-3">
+                        <p class="text-xs text-gray-500">
+                            ⏰ Vencido desde: <span class="font-bold text-red-600">5 días</span>
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            📞 <span class="text-blue-600 font-medium">3105551234</span>
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="registrarPago('María López', 400000)" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-blue-700 transition">
+                            💵 Registrar Pago
+                        </button>
+                        <button onclick="llamarCliente('3105551234')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📞
+                        </button>
+                        <button onclick="verMapa('Carrera 50 #30-20, Centro')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📍
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cliente Card 2 - Pendiente -->
+            <div class="px-6 mb-4 client-card show" data-status="pendiente" data-nombre="pedro">
+                <div class="bg-white rounded-2xl shadow-md p-4 border-l-4 border-yellow-500">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center font-bold text-yellow-600">
+                                PR
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">Pedro Rodríguez</h3>
+                                <p class="text-xs text-gray-500">CC: 1234567890</p>
+                                <p class="text-xs text-gray-500 mt-1">📍 Calle 10 #15-25, Norte</p>
+                            </div>
+                        </div>
+                        <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg text-xs font-bold">
+                            ACTIVO
+                        </span>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-3 mb-3">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Deuda Total:</span>
+                            <span class="font-bold text-gray-800">$300,000</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Pagado:</span>
+                            <span class="font-bold text-green-600">$50,000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Saldo:</span>
+                            <span class="font-bold text-blue-600">$250,000</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mb-3">
+                        <p class="text-xs text-gray-500">
+                            ⏰ Vence en: <span class="font-bold text-yellow-600">3 días</span>
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            📞 <span class="text-blue-600 font-medium">3001234567</span>
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="registrarPago('Pedro Rodríguez', 250000)" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-blue-700 transition">
+                            💵 Registrar Pago
+                        </button>
+                        <button onclick="llamarCliente('3001234567')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📞
+                        </button>
+                        <button onclick="verMapa('Calle 10 #15-25, Norte')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📍
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cliente Card 3 - Al Día -->
+            <div class="px-6 mb-4 client-card show" data-status="pendiente" data-nombre="laura">
+                <div class="bg-white rounded-2xl shadow-md p-4 border-l-4 border-green-500">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center font-bold text-green-600">
+                                LG
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">Laura García</h3>
+                                <p class="text-xs text-gray-500">CC: 5555666677</p>
+                                <p class="text-xs text-gray-500 mt-1">📍 Av. 6 #20-40, Sur</p>
+                            </div>
+                        </div>
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-bold">
+                            AL DÍA
+                        </span>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-3 mb-3">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Deuda Total:</span>
+                            <span class="font-bold text-gray-800">$400,000</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Pagado:</span>
+                            <span class="font-bold text-green-600">$200,000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Saldo:</span>
+                            <span class="font-bold text-blue-600">$200,000</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mb-3">
+                        <p class="text-xs text-gray-500">
+                            ⏰ Vence en: <span class="font-bold text-green-600">15 días</span>
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            📞 <span class="text-blue-600 font-medium">3009876543</span>
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="registrarPago('Laura García', 200000)" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-blue-700 transition">
+                            💵 Registrar Pago
+                        </button>
+                        <button onclick="llamarCliente('3009876543')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📞
+                        </button>
+                        <button onclick="verMapa('Av. 6 #20-40, Sur')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📍
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cliente Card 4 - Ya Pagó -->
+            <div class="px-6 mb-4 client-card show" data-status="pagado" data-nombre="juan">
+                <div class="bg-white rounded-2xl shadow-md p-4 border-l-4 border-green-500">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center font-bold text-green-600">
+                                JS
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">Juan Sánchez</h3>
+                                <p class="text-xs text-gray-500">CC: 1122334455</p>
+                                <p class="text-xs text-gray-500 mt-1">📍 Calle 25 #40-10, Este</p>
+                            </div>
+                        </div>
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-bold">
+                            ✅ PAGADO
+                        </span>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-3 mb-3">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Deuda Total:</span>
+                            <span class="font-bold text-gray-800">$250,000</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Pagado:</span>
+                            <span class="font-bold text-green-600">$250,000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Saldo:</span>
+                            <span class="font-bold text-green-600">$0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mb-3">
+                        <p class="text-xs text-gray-500">
+                            ✅ Pagado el: <span class="font-bold text-green-600">Hoy, 8:30 AM</span>
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            📞 <span class="text-blue-600 font-medium">3109876543</span>
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="verDetallePago('Juan Sánchez')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-green-700 transition">
+                            ✅ Ver Detalle Pago
+                        </button>
+                        <button onclick="llamarCliente('3109876543')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📞
+                        </button>
+                        <button onclick="verMapa('Calle 25 #40-10, Este')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📍
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cliente Card 5 - Ya Pagó -->
+            <div class="px-6 mb-4 client-card show" data-status="pagado" data-nombre="carmen">
+                <div class="bg-white rounded-2xl shadow-md p-4 border-l-4 border-green-500">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center font-bold text-green-600">
+                                CM
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">Carmen Muñoz</h3>
+                                <p class="text-xs text-gray-500">CC: 9988776655</p>
+                                <p class="text-xs text-gray-500 mt-1">📍 Av. 15 #50-30, Oeste</p>
+                            </div>
+                        </div>
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-bold">
+                            ✅ PAGADO
+                        </span>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-3 mb-3">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Deuda Total:</span>
+                            <span class="font-bold text-gray-800">$180,000</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">Pagado:</span>
+                            <span class="font-bold text-green-600">$180,000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">Saldo:</span>
+                            <span class="font-bold text-green-600">$0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mb-3">
+                        <p class="text-xs text-gray-500">
+                            ✅ Pagado el: <span class="font-bold text-green-600">Ayer, 4:15 PM</span>
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            📞 <span class="text-blue-600 font-medium">3001239876</span>
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="verDetallePago('Carmen Muñoz')" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-green-700 transition">
+                            ✅ Ver Detalle Pago
+                        </button>
+                        <button onclick="llamarCliente('3001239876')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📞
+                        </button>
+                        <button onclick="verMapa('Av. 15 #50-30, Oeste')" class="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-200 transition">
+                            📍
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Navigation -->
+            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4" style="width: 375px; margin: 0 auto;">
+                <div class="flex justify-around items-center">
+                    <button onclick="navegar('inicio')" class="nav-item active flex flex-col items-center">
+                        <span class="text-2xl mb-1">🏠</span>
+                        <span class="text-xs font-medium">Inicio</span>
+                    </button>
+                    <button onclick="navegar('stats')" class="nav-item flex flex-col items-center text-gray-400">
+                        <span class="text-2xl mb-1">📊</span>
+                        <span class="text-xs">Stats</span>
+                    </button>
+                    <button onclick="navegar('pagos')" class="nav-item flex flex-col items-center text-gray-400">
+                        <span class="text-2xl mb-1">💵</span>
+                        <span class="text-xs">Pagos</span>
+                    </button>
+                    <button onclick="navegar('perfil')" class="nav-item flex flex-col items-center text-gray-400">
+                        <span class="text-2xl mb-1">👤</span>
+                        <span class="text-xs">Perfil</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="h-20"></div> <!-- Spacer for bottom nav -->
+        </div>
+    </div>
+
+    <!-- Modal para Registrar Pago -->
+    <div id="modal-pago" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Registrar Pago</h2>
+            <p class="text-gray-600 mb-4" id="cliente-nombre-pago"></p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Monto a Pagar</label>
+                <input type="number" id="monto-pago" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Ingrese el monto">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
+                <select id="metodo-pago" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <option>Efectivo</option>
+                    <option>Transferencia</option>
+                    <option>Nequi</option>
+                    <option>Daviplata</option>
+                </select>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="cerrarModal('modal-pago')" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-medium">Cancelar</button>
+                <button onclick="confirmarPago()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-medium">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Ver Detalle Pago -->
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Detalle de Pago</h2>
+            <p class="text-gray-600 mb-4" id="cliente-nombre-detalle"></p>
+            <div class="bg-green-50 p-4 rounded-lg mb-4">
+                <p class="text-sm text-gray-600">Estado: <span class="font-bold text-green-600">✅ Pagado Completamente</span></p>
+                <p class="text-sm text-gray-600 mt-2">Fecha de Pago: <span class="font-bold">Hoy, 8:30 AM</span></p>
+                <p class="text-sm text-gray-600 mt-2">Monto Pagado: <span class="font-bold text-green-600">$250,000</span></p>
+                <p class="text-sm text-gray-600 mt-2">Método: <span class="font-bold">Efectivo</span></p>
+            </div>
+            <button onclick="cerrarModal('modal-detalle')" class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        let clienteActualPago = '';
+        let saldoActual = 0;
+
+        function filtrarClientes(filtro) {
+            // Actualizar tabs
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-gray-500');
+            });
+            
+            const tabButton = document.querySelector(`[data-tab="${filtro}"]`);
+            if (tabButton) {
+                tabButton.classList.add('tab-active');
+                tabButton.classList.remove('text-gray-500');
+            }
+
+            // Filtrar cards
+            const cards = document.querySelectorAll('.client-card');
+            cards.forEach(card => {
+                const status = card.getAttribute('data-status');
+                if (filtro === 'todos') {
+                    card.classList.add('show');
+                } else if (filtro === 'pendientes' && (status === 'pendiente')) {
+                    card.classList.add('show');
+                } else if (filtro === 'vencidos' && status === 'vencido') {
+                    card.classList.add('show');
+                } else if (filtro === 'pagados' && status === 'pagado') {
+                    card.classList.add('show');
+                } else {
+                    card.classList.remove('show');
+                }
+            });
+        }
+
+        function buscarCliente() {
+            const busqueda = document.getElementById('search-input').value.toLowerCase();
+            const cards = document.querySelectorAll('.client-card');
+            
+            cards.forEach(card => {
+                const nombre = card.getAttribute('data-nombre').toLowerCase();
+                const status = card.getAttribute('data-status');
+                const textoCard = card.textContent.toLowerCase();
+                
+                if (busqueda === '' || nombre.includes(busqueda) || textoCard.includes(busqueda)) {
+                    // Verificar si también cumple con el filtro activo
+                    const tabActivo = document.querySelector('.tab-button.tab-active');
+                    if (tabActivo) {
+                        const filtro = tabActivo.getAttribute('data-tab');
+                        if (filtro === 'todos' || 
+                            (filtro === 'pendientes' && status === 'pendiente') ||
+                            (filtro === 'vencidos' && status === 'vencido') ||
+                            (filtro === 'pagados' && status === 'pagado')) {
+                            card.classList.add('show');
+                        } else {
+                            card.classList.remove('show');
+                        }
+                    } else {
+                        card.classList.add('show');
+                    }
+                } else {
+                    card.classList.remove('show');
+                }
+            });
+        }
+
+        function mostrarFiltros() {
+            alert('Filtros disponibles:\n- Por estado\n- Por monto\n- Por fecha de vencimiento');
+        }
+
+        function registrarPago(nombre, saldo) {
+            clienteActualPago = nombre;
+            saldoActual = saldo;
+            document.getElementById('cliente-nombre-pago').textContent = `Cliente: ${nombre}`;
+            document.getElementById('monto-pago').value = '';
+            document.getElementById('monto-pago').max = saldo;
+            document.getElementById('monto-pago').placeholder = `Máximo: $${saldo.toLocaleString()}`;
+            document.getElementById('modal-pago').classList.add('show');
+        }
+
+        function confirmarPago() {
+            const monto = parseFloat(document.getElementById('monto-pago').value);
+            const metodo = document.getElementById('metodo-pago').value;
+            
+            if (!monto || monto <= 0) {
+                alert('Por favor ingrese un monto válido');
+                return;
+            }
+            
+            if (monto > saldoActual) {
+                alert(`El monto no puede ser mayor al saldo pendiente de $${saldoActual.toLocaleString()}`);
+                return;
+            }
+            
+            alert(`✅ Pago registrado exitosamente\n\nCliente: ${clienteActualPago}\nMonto: $${monto.toLocaleString()}\nMétodo: ${metodo}\n\n¡Gracias por registrar el pago!`);
+            cerrarModal('modal-pago');
+        }
+
+        function verDetallePago(nombre) {
+            document.getElementById('cliente-nombre-detalle').textContent = `Cliente: ${nombre}`;
+            document.getElementById('modal-detalle').classList.add('show');
+        }
+
+        function cerrarModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function llamarCliente(telefono) {
+            alert(`📞 Llamando a: ${telefono}\n\nEn una app real, esto abriría el marcador telefónico.`);
+        }
+
+        function verMapa(direccion) {
+            alert(`📍 Ubicación: ${direccion}\n\nEn una app real, esto abriría el mapa con la ubicación del cliente.`);
+        }
+
+        function navegar(seccion) {
+            // Actualizar navegación
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                item.classList.add('text-gray-400');
+            });
+            
+            event.target.closest('.nav-item').classList.add('active');
+            event.target.closest('.nav-item').classList.remove('text-gray-400');
+            
+            // Mostrar mensaje según la sección
+            const mensajes = {
+                'inicio': 'Ya estás en la pantalla de inicio',
+                'stats': 'Mostrando estadísticas del cobrador',
+                'pagos': 'Mostrando historial de pagos',
+                'perfil': 'Mostrando perfil del cobrador'
+            };
+            
+            alert(mensajes[seccion] || 'Navegando...');
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+    </script>
+    
+</body>
+</html>
